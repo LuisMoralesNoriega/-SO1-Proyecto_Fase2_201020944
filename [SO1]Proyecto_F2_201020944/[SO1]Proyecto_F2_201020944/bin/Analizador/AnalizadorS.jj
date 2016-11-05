@@ -1,0 +1,71 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;
+  IGNORE_CASE = true;}PARSER_BEGIN(AnalizadorS)package Analizador;
+import Estructuras.*;
+
+public class AnalizadorS{
+}PARSER_END(AnalizadorS)
+
+SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* OPERATORS */{
+  < SIMU : "Simulacion" >
+| < EJEC : "Ejecucion" >
+| < RECURSO : "Recurso" >
+| < TIEMPO : "Tiempo" >
+| < PROC : "Proceso" >
+| < ASIG : "Asignar" >
+| < LIBE : "Liberar" >
+| < TERMI : "Terminar" >  | < PLUS : "+" >| < MINUS : "-" >| < MULTIPLY : "*" >| < DIVIDE : "/" >}TOKEN :{  < CONSTANT : (< DIGIT >)+ >| < #DIGIT : [ "0"-"9" ] >}
+void Inicio():{}{
+
+	(	  < SIMU > "{" 	
+
+	(Recursos())*
+	(Tiempos())*
+	
+	"}"
+	)
+| (
+	< EJEC > "{"
+		(Ejecuciones())*
+	"}"
+  )
+	
+}
+
+void Recursos(): {Token n;} {
+	< RECURSO > "R" n = < CONSTANT > ";"
+	{ Recurso re = new Recurso(Integer.parseInt(n.image));
+	  Listas.Lrecursos.add(re);
+	}	
+}
+
+void Tiempos() : { Token n; Proceso p; Tiempo ti = new Tiempo(); } {
+	< TIEMPO > "(" n = < CONSTANT > ")" 
+
+	"{" (p = Procesos() {ti.Lprocesos.add(p); })* "}"	{ ti.id = Integer.parseInt(n.image);
+							      					  Listas.Ltiempos.add(ti);
+							    					}
+}
+
+Proceso Procesos() : { Token n; Proceso p = new Proceso(); Accion a = new Accion(); } {
+	
+	< PROC > "(" n = < CONSTANT > ")" 
+
+	"{" (a = Acciones() { p.Lacciones.add(a);  })* "}"
+	{ p.id = Integer.parseInt(n.image);
+	  return p;
+	}
+
+}
+
+Accion Acciones(): { Token n; Accion a = new Accion();} {
+
+	( < ASIG > "(" [ "R" n = < CONSTANT > { a.id = 1; a.Lrecursos.add(Integer.parseInt(n.image)); } ("," "R" n = < CONSTANT > { a.id = 1; a.Lrecursos.add(Integer.parseInt(n.image)); })* ] ")" ";"
+	| < LIBE > "(" [ "R" n = < CONSTANT > { a.id = 2; a.Lrecursos.add(Integer.parseInt(n.image)); } ("," "R" n = < CONSTANT > { a.id = 2; a.Lrecursos.add(Integer.parseInt(n.image)); })* ] ")" ";"
+	| < TERMI > "("")" ";" { a.id = 3; }
+	) { return a; }	
+}
+void Ejecuciones():{}{
+	< PROC > "("< CONSTANT > "," < CONSTANT > "," < CONSTANT > "," < CONSTANT > ")" ";"
+} 
